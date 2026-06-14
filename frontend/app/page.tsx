@@ -42,6 +42,7 @@ export default function Home() {
   const [noteText, setNoteText] = useState("");
   const [notes, setNotes] = useState<string[]>([]);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+  const [copyMessage, setCopyMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -53,6 +54,94 @@ export default function Home() {
 
   const exportCareSummary = () => {
     window.print();
+  };
+
+  const copyFamilySummary = async () => {
+    if (!carePlan) return;
+
+    const summary = `
+CareGuide AI - Family Care Summary
+
+Summary:
+${carePlan.summary || "Not specified"}
+
+Medications:
+${
+  carePlan.medications?.length > 0
+    ? carePlan.medications
+        .map(
+          (med) =>
+            `- ${med.name || "Not specified"} | ${med.dosage || "Not specified"} | ${
+              med.frequency || "Not specified"
+            } | ${med.instructions || "Not specified"}`
+        )
+        .join("\n")
+    : "None listed"
+}
+
+Daily Tasks:
+${
+  carePlan.daily_tasks?.length > 0
+    ? carePlan.daily_tasks
+        .map((task, index) =>
+          completedTasks.includes(index) ? `- [Done] ${task}` : `- [Pending] ${task}`
+        )
+        .join("\n")
+    : "None listed"
+}
+
+Follow-Up Actions:
+${
+  carePlan.follow_up?.length > 0
+    ? carePlan.follow_up
+        .map((item, index) =>
+          completedFollowUps.includes(index)
+            ? `- [Done] ${item}`
+            : `- [Pending] ${item}`
+        )
+        .join("\n")
+    : "None listed"
+}
+
+Warning Signs:
+${
+  carePlan.warning_signs?.length > 0
+    ? carePlan.warning_signs.map((item) => `- ${item}`).join("\n")
+    : "None listed"
+}
+
+Logged Symptoms / Observations:
+${
+  loggedSymptoms.length > 0
+    ? loggedSymptoms.map((symptom) => `- ${symptom}`).join("\n")
+    : "None logged"
+}
+
+Caregiver Notes:
+${notes.length > 0 ? notes.map((note) => `- ${note}`).join("\n") : "None added"}
+
+Recent Timeline:
+${
+  timeline.length > 0
+    ? timeline.map((item) => `- ${item.time}: ${item.event}`).join("\n")
+    : "No timeline events"
+}
+
+Disclaimer:
+${
+  carePlan.disclaimer ||
+  "This tool does not provide medical advice. Contact a licensed healthcare professional for medical concerns."
+}
+`;
+
+    try {
+      await navigator.clipboard.writeText(summary.trim());
+      setCopyMessage("Family care summary copied to clipboard.");
+      addTimelineEvent("Copied family care summary");
+    } catch (error) {
+      console.error(error);
+      setCopyMessage("Unable to copy summary. Please try again.");
+    }
   };
 
   const toggleTask = (index: number, task: string) => {
@@ -136,6 +225,7 @@ export default function Home() {
     setNotes([]);
     setNoteText("");
     setTimeline([]);
+    setCopyMessage("");
 
     const formData = new FormData();
     formData.append("file", file);
@@ -226,12 +316,27 @@ export default function Home() {
             </button>
 
             {carePlan && (
-              <button
-                onClick={exportCareSummary}
-                className="mt-4 w-full rounded-xl bg-slate-900 px-5 py-3 text-base font-semibold text-white hover:bg-slate-950"
-              >
-                📄 Export Care Summary
-              </button>
+              <>
+                <button
+                  onClick={exportCareSummary}
+                  className="mt-4 w-full rounded-xl bg-slate-900 px-5 py-3 text-base font-semibold text-white hover:bg-slate-950"
+                >
+                  📄 Export Care Summary
+                </button>
+
+                <button
+                  onClick={copyFamilySummary}
+                  className="mt-4 w-full rounded-xl bg-emerald-700 px-5 py-3 text-base font-semibold text-white hover:bg-emerald-800"
+                >
+                  📋 Copy Family Summary
+                </button>
+              </>
+            )}
+
+            {copyMessage && (
+              <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+                {copyMessage}
+              </div>
             )}
 
             {error && (
@@ -594,6 +699,30 @@ export default function Home() {
                   ) : (
                     <p className="mt-4 text-slate-600">
                       No caregiver notes added yet.
+                    </p>
+                  )}
+                </section>
+
+                <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 print:hidden">
+                  <h3 className="mb-3 text-xl font-semibold">
+                    👨‍👩‍👧 Family Care Summary
+                  </h3>
+
+                  <p className="mb-4 leading-7 text-slate-700">
+                    Create a concise summary that can be shared with family
+                    members, backup caregivers, or care team members.
+                  </p>
+
+                  <button
+                    onClick={copyFamilySummary}
+                    className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+                  >
+                    📋 Copy Summary
+                  </button>
+
+                  {copyMessage && (
+                    <p className="mt-3 text-sm font-medium text-emerald-800">
+                      {copyMessage}
                     </p>
                   )}
                 </section>
