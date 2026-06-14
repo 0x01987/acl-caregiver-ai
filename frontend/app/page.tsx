@@ -23,11 +23,22 @@ type TimelineItem = {
   event: string;
 };
 
+const presetSymptoms = [
+  "Confusion",
+  "Fatigue",
+  "Dizziness",
+  "Pain",
+  "Poor appetite",
+  "Trouble sleeping",
+];
+
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [carePlan, setCarePlan] = useState<CarePlan | null>(null);
   const [completedTasks, setCompletedTasks] = useState<number[]>([]);
   const [completedFollowUps, setCompletedFollowUps] = useState<number[]>([]);
+  const [loggedSymptoms, setLoggedSymptoms] = useState<string[]>([]);
+  const [customSymptom, setCustomSymptom] = useState("");
   const [noteText, setNoteText] = useState("");
   const [notes, setNotes] = useState<string[]>([]);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
@@ -68,6 +79,32 @@ export default function Home() {
     );
   };
 
+  const toggleSymptom = (symptom: string) => {
+    const isLogged = loggedSymptoms.includes(symptom);
+
+    setLoggedSymptoms((prev) =>
+      isLogged ? prev.filter((item) => item !== symptom) : [...prev, symptom]
+    );
+
+    addTimelineEvent(
+      isLogged ? `Removed symptom: ${symptom}` : `Logged symptom: ${symptom}`
+    );
+  };
+
+  const addCustomSymptom = () => {
+    const cleanSymptom = customSymptom.trim();
+
+    if (!cleanSymptom) return;
+    if (loggedSymptoms.includes(cleanSymptom)) {
+      setCustomSymptom("");
+      return;
+    }
+
+    setLoggedSymptoms((prev) => [...prev, cleanSymptom]);
+    setCustomSymptom("");
+    addTimelineEvent(`Logged custom symptom: ${cleanSymptom}`);
+  };
+
   const addNote = () => {
     if (!noteText.trim()) return;
 
@@ -90,6 +127,8 @@ export default function Home() {
     setCarePlan(null);
     setCompletedTasks([]);
     setCompletedFollowUps([]);
+    setLoggedSymptoms([]);
+    setCustomSymptom("");
     setNotes([]);
     setNoteText("");
     setTimeline([]);
@@ -196,7 +235,14 @@ export default function Home() {
 
             {carePlan && totalFollowUps > 0 && (
               <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-                Follow-up progress: {completedFollowUpCount} of {totalFollowUps} completed
+                Follow-up progress: {completedFollowUpCount} of{" "}
+                {totalFollowUps} completed
+              </div>
+            )}
+
+            {loggedSymptoms.length > 0 && (
+              <div className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-4 text-sm text-purple-800">
+                Symptoms logged: {loggedSymptoms.length}
               </div>
             )}
 
@@ -412,6 +458,72 @@ export default function Home() {
                   )}
                 </section>
 
+                <section className="rounded-xl border border-purple-200 bg-purple-50 p-5">
+                  <h3 className="mb-3 text-xl font-semibold">
+                    🩺 Symptoms & Observations
+                  </h3>
+
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {presetSymptoms.map((symptom) => {
+                      const isLogged = loggedSymptoms.includes(symptom);
+
+                      return (
+                        <label
+                          key={symptom}
+                          className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition ${
+                            isLogged
+                              ? "border-purple-300 bg-white text-purple-800"
+                              : "border-purple-100 bg-white text-slate-700 hover:bg-purple-100"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isLogged}
+                            onChange={() => toggleSymptom(symptom)}
+                            className="h-5 w-5"
+                          />
+                          <span>{symptom}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                    <input
+                      value={customSymptom}
+                      onChange={(e) => setCustomSymptom(e.target.value)}
+                      placeholder="Add custom symptom or observation"
+                      className="flex-1 rounded-xl border border-purple-200 bg-white p-3 text-slate-800 outline-none focus:border-purple-500"
+                    />
+
+                    <button
+                      onClick={addCustomSymptom}
+                      className="rounded-xl bg-purple-700 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-800"
+                    >
+                      Add Symptom
+                    </button>
+                  </div>
+
+                  {loggedSymptoms.length > 0 && (
+                    <div className="mt-4">
+                      <p className="mb-2 text-sm font-semibold text-purple-800">
+                        Logged observations:
+                      </p>
+
+                      <div className="flex flex-wrap gap-2">
+                        {loggedSymptoms.map((symptom) => (
+                          <span
+                            key={symptom}
+                            className="rounded-full bg-white px-3 py-1 text-sm font-medium text-purple-800"
+                          >
+                            {symptom}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </section>
+
                 <section className="rounded-xl border border-slate-200 bg-slate-50 p-5">
                   <h3 className="mb-3 text-xl font-semibold">
                     📝 Caregiver Notes
@@ -469,7 +581,7 @@ export default function Home() {
                   ) : (
                     <p className="text-slate-600">
                       Timeline events will appear as you complete tasks, follow
-                      up actions, or add notes.
+                      up actions, log symptoms, or add notes.
                     </p>
                   )}
                 </section>
