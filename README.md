@@ -12,6 +12,22 @@ Built as a submission for the ACL (Administration for Community Living) Caregive
 
 ---
 
+## 🌐 Live Demo
+
+### Frontend
+
+https://YOUR-VERCEL-URL.vercel.app
+
+### Backend API
+
+https://YOUR-RENDER-URL.onrender.com/docs
+
+---
+
+Try the live demo by uploading a healthcare document and generating a caregiver-friendly care plan.
+
+---
+
 ## 🚀 Current Features
 
 ### 📄 Document Processing
