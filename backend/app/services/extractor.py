@@ -1,4 +1,5 @@
 import os
+import json
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -12,35 +13,37 @@ def generate_care_plan(document_text: str):
         return {"error": "No readable text found in document."}
 
     prompt = f"""
-You are an expert caregiver assistant.
+You are an expert caregiver support assistant.
 
 Analyze the following medical, discharge, medication, or caregiver document.
 
-Create a caregiver-friendly care plan.
+Return ONLY valid JSON using this exact schema:
 
-Return the response in this exact format:
+{{
+  "summary": "string",
+  "daily_tasks": ["string"],
+  "medications": [
+    {{
+      "name": "string",
+      "dosage": "string",
+      "frequency": "string",
+      "instructions": "string"
+    }}
+  ],
+  "warning_signs": ["string"],
+  "follow_up": ["string"],
+  "disclaimer": "string"
+}}
 
-1. Summary
-Briefly explain the patient's care situation in simple language.
-
-2. Daily Tasks
-List clear daily caregiver tasks.
-
-3. Medications
-List medication name, dosage, frequency, and special instructions if available.
-
-4. Warning Signs
-List symptoms or changes that require contacting a provider or seeking urgent care.
-
-5. Follow-Up Actions
-List appointments, calls, lab work, or next steps.
-
-Important:
+Rules:
+- Return JSON only.
+- Do not use markdown.
+- Do not use code fences.
 - Use simple caregiver-friendly language.
-- Do not provide diagnosis.
+- Do not provide a diagnosis.
 - Do not invent medication details.
-- If information is missing, say "Not specified."
-- Include a medical disclaimer.
+- If information is missing, use "Not specified".
+- Include a clear medical disclaimer.
 
 Document:
 {document_text}
@@ -51,7 +54,7 @@ Document:
         messages=[
             {
                 "role": "system",
-                "content": "You help caregivers understand care documents. You do not provide medical advice.",
+                "content": "You help caregivers understand care documents. You do not provide medical advice. Return only valid JSON.",
             },
             {
                 "role": "user",
@@ -60,6 +63,16 @@ Document:
         ],
     )
 
-    return {
-        "care_plan": response.choices[0].message.content
-    }
+    ai_output = response.choices[0].message.content
+
+    try:
+        return json.loads(ai_output)
+    except Exception:
+        return {
+            "summary": ai_output,
+            "daily_tasks": [],
+            "medications": [],
+            "warning_signs": [],
+            "follow_up": [],
+            "disclaimer": "This tool does not provide medical advice. Contact a licensed healthcare professional for medical concerns.",
+        }
