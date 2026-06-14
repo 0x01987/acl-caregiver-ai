@@ -85,7 +85,7 @@ export default function Home() {
     setAssistantAnswer("");
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/assistant", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/assistant`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -293,7 +293,7 @@ ${
     formData.append("file", file);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/extract", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/extract`, {
         method: "POST",
         body: formData,
       });
