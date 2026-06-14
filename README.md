@@ -16,11 +16,11 @@ Built as a submission for the ACL (Administration for Community Living) Caregive
 
 ### Frontend
 
-https://YOUR-VERCEL-URL.vercel.app
+https://acl-caregiver-ai.vercel.app/
 
 ### Backend API
 
-https://YOUR-RENDER-URL.onrender.com/docs
+https://acl-caregiver-ai.onrender.com/docs
 
 ---
 
