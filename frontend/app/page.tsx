@@ -18,29 +18,50 @@ type CarePlan = {
   disclaimer: string;
 };
 
+type TimelineItem = {
+  time: string;
+  event: string;
+};
+
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [carePlan, setCarePlan] = useState<CarePlan | null>(null);
   const [completedTasks, setCompletedTasks] = useState<number[]>([]);
   const [noteText, setNoteText] = useState("");
   const [notes, setNotes] = useState<string[]>([]);
+  const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const toggleTask = (index: number) => {
+  const currentTime = () => new Date().toLocaleString();
+
+  const addTimelineEvent = (event: string) => {
+    setTimeline((prev) => [{ time: currentTime(), event }, ...prev]);
+  };
+
+  const toggleTask = (index: number, task: string) => {
+    const isCompleted = completedTasks.includes(index);
+
     setCompletedTasks((prev) =>
-      prev.includes(index)
+      isCompleted
         ? prev.filter((item) => item !== index)
         : [...prev, index]
+    );
+
+    addTimelineEvent(
+      isCompleted ? `Reopened task: ${task}` : `Completed task: ${task}`
     );
   };
 
   const addNote = () => {
     if (!noteText.trim()) return;
 
-    const timestamp = new Date().toLocaleString();
-    setNotes((prev) => [`${timestamp}: ${noteText.trim()}`, ...prev]);
+    const timestamp = currentTime();
+    const cleanNote = noteText.trim();
+
+    setNotes((prev) => [`${timestamp}: ${cleanNote}`, ...prev]);
     setNoteText("");
+    addTimelineEvent(`Added caregiver note: ${cleanNote}`);
   };
 
   const handleUpload = async () => {
@@ -55,6 +76,7 @@ export default function Home() {
     setCompletedTasks([]);
     setNotes([]);
     setNoteText("");
+    setTimeline([]);
 
     const formData = new FormData();
     formData.append("file", file);
@@ -73,6 +95,7 @@ export default function Home() {
       }
 
       setCarePlan(data);
+      addTimelineEvent(`Generated care plan from ${file.name}`);
     } catch (error) {
       console.error(error);
       setError("Unable to generate care plan. Please try again.");
@@ -158,6 +181,12 @@ export default function Home() {
               </div>
             )}
 
+            {timeline.length > 0 && (
+              <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+                Timeline events: {timeline.length}
+              </div>
+            )}
+
             <p className="mt-4 text-sm leading-6 text-slate-600">
               This prototype does not provide medical advice. It helps organize
               care information for review by caregivers and healthcare
@@ -221,7 +250,7 @@ export default function Home() {
                               <input
                                 type="checkbox"
                                 checked={isCompleted}
-                                onChange={() => toggleTask(index)}
+                                onChange={() => toggleTask(index, task)}
                                 className="mt-1 h-5 w-5"
                               />
 
@@ -358,6 +387,35 @@ export default function Home() {
                         </div>
                       ))}
                     </div>
+                  )}
+                </section>
+
+                <section className="rounded-xl border border-blue-200 bg-blue-50 p-5">
+                  <h3 className="mb-3 text-xl font-semibold">
+                    🕘 Care Timeline
+                  </h3>
+
+                  {timeline.length > 0 ? (
+                    <div className="space-y-3">
+                      {timeline.map((item, index) => (
+                        <div
+                          key={index}
+                          className="rounded-lg border border-blue-100 bg-white p-3"
+                        >
+                          <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">
+                            {item.time}
+                          </p>
+                          <p className="mt-1 text-sm leading-6 text-slate-700">
+                            {item.event}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-slate-600">
+                      Timeline events will appear as you complete tasks or add
+                      notes.
+                    </p>
                   )}
                 </section>
 
