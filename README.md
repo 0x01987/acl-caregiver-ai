@@ -1,52 +1,67 @@
 # 🩺 CareGuide AI
 
-> Transforming complex care documents into caregiver-friendly action plans.
+> Transforming complex healthcare documents into caregiver-friendly action plans and care coordination tools.
 
 ## 🎯 Overview
 
-CareGuide AI is an AI-powered caregiver assistant designed to help family caregivers better understand discharge instructions, medication lists, care plans, and healthcare documents.
+CareGuide AI is an AI-powered caregiver support platform designed to help family caregivers better understand discharge instructions, medication lists, care plans, and healthcare documents.
 
-The platform analyzes uploaded documents and generates simple, actionable care plans that help caregivers:
+The platform analyzes uploaded documents and generates clear, actionable care plans while providing tools for ongoing care coordination, symptom tracking, follow-up management, family communication, and caregiver documentation.
 
-* ✅ Understand medical instructions
-* 💊 Manage medications
-* 📋 Track daily care tasks
-* ⚠ Identify warning signs
-* 📅 Follow up with healthcare providers
-
-This project is being developed as a submission for the ACL (Administration for Community Living) Caregiver AI Challenge.
+Built as a submission for the ACL (Administration for Community Living) Caregiver AI Challenge – Track 1: AI Tools to Support Caregivers.
 
 ---
 
 ## 🚀 Current Features
 
-### Document Processing
+### 📄 Document Processing
 
 * TXT document upload
 * PDF document upload
 * JPG image upload
 * PNG image upload
+* PDF text extraction (PyMuPDF)
+* Image OCR processing (Tesseract OCR)
 
-### AI Analysis
+### 🤖 AI Care Plan Generation
 
-* OpenAI-powered care plan generation
+* OpenAI-powered care plan creation
 * Caregiver-friendly summaries
 * Daily task extraction
 * Medication identification
 * Warning sign detection
 * Follow-up recommendations
+* Structured JSON responses
 
-### OCR Support
+### 📋 Caregiver Dashboard
 
-* Text-based PDF extraction (PyMuPDF)
-* Image OCR (Tesseract OCR)
+* Patient care summary
+* Medication management table
+* Daily task checklist
+* Progress tracking
+* Follow-up appointment tracker
+* Warning signs monitoring
 
-### Web Application
+### 🩺 Care Coordination Tools
 
-* Next.js frontend
-* FastAPI backend
-* Responsive user interface
-* Real-time document analysis
+* Symptom & observation tracking
+* Custom symptom logging
+* Caregiver notes
+* Care timeline/history
+* Follow-up tracking
+* Family care summary generation
+
+### 👨‍👩‍👧 Family Caregiver Support
+
+* Family care summary sharing
+* Copy-to-clipboard summary export
+* Care coordination support
+* Provider-ready care summaries
+
+### 📄 Export Features
+
+* Care summary PDF export
+* Printable caregiver dashboard
 
 ---
 
@@ -57,16 +72,33 @@ Caregiver
     ↓
 Next.js Frontend
     ↓
-FastAPI API
+FastAPI Backend
     ↓
 PDF / OCR Processing
     ↓
 OpenAI Analysis
     ↓
-Care Plan Generation
+Structured Care Plan
     ↓
-Caregiver Dashboard
+Interactive Caregiver Dashboard
 ```
+
+---
+
+## 🎯 ACL Challenge Alignment
+
+Track 1: AI Tools to Support Caregivers
+
+CareGuide AI directly supports:
+
+* ✅ Care Coordination & Navigation
+* ✅ Caregiver Education
+* ✅ Documentation & Tracking
+* ✅ Decision Support
+* ✅ Family Caregiver Communication
+* ✅ Shareable Care Summaries
+* ✅ Follow-Up Management
+* ✅ Symptom Tracking & Monitoring
 
 ---
 
@@ -75,6 +107,7 @@ Caregiver Dashboard
 ### Frontend
 
 * Next.js
+* React
 * TypeScript
 * Tailwind CSS
 
@@ -188,46 +221,54 @@ http://localhost:3000
 
 ## 🔒 Security
 
-The following files are excluded from Git:
+The following are excluded from source control:
 
 * `.env`
 * Python virtual environments
 * Node modules
 * Next.js build artifacts
 * Upload directories
+* Generated files and caches
 
 ---
 
-## ⚠ Disclaimer
+## 📈 Project Status
 
-CareGuide AI does not provide medical advice.
-
-The platform is intended to help caregivers better organize and understand healthcare information. Users should always consult qualified healthcare professionals regarding medical decisions.
-
----
-
-## 🗺 Roadmap
-
-### Phase 1 (Current)
+### Phase 1 — Completed ✅
 
 * Document upload
 * PDF extraction
 * OCR support
 * AI-generated care plans
-
-### Phase 2
-
 * Structured JSON responses
-* Caregiver dashboard cards
-* Medication timeline
-* Follow-up tracking
 
-### Phase 3
+### Phase 2 — Completed ✅
 
-* Care plan history
-* Family sharing
-* Export to PDF
-* Community resource recommendations
+* Interactive caregiver dashboard
+* Daily task checklist
+* Medication management
+* Follow-up tracker
+* Symptom tracking
+* Caregiver notes
+* Care timeline
+* Family care summary
+* PDF export
+
+### Phase 3 — In Progress 🚧
+
+* AI Caregiver Assistant
+* Context-aware caregiver chat
+* Enhanced caregiver decision support
+* Resource recommendations
+* Care history and longitudinal tracking
+
+---
+
+## ⚠ Disclaimer
+
+CareGuide AI does not provide medical advice, diagnosis, or treatment recommendations.
+
+The platform is intended to help caregivers better organize and understand healthcare information. Users should always consult qualified healthcare professionals regarding medical decisions.
 
 ---
 
@@ -235,4 +276,4 @@ The platform is intended to help caregivers better organize and understand healt
 
 Family caregivers spend countless hours interpreting discharge instructions, medication lists, and healthcare documents.
 
-CareGuide AI aims to reduce caregiver burden by transforming complex medical information into simple, actionable care plans that improve understanding, coordination, and confidence while supporting aging in place.
+CareGuide AI aims to reduce caregiver burden by transforming complex medical information into simple, actionable care plans while improving care coordination, communication, confidence, and quality of care for individuals receiving support at home and in their communities.
