@@ -22,6 +22,8 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [carePlan, setCarePlan] = useState<CarePlan | null>(null);
   const [completedTasks, setCompletedTasks] = useState<number[]>([]);
+  const [noteText, setNoteText] = useState("");
+  const [notes, setNotes] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -31,6 +33,14 @@ export default function Home() {
         ? prev.filter((item) => item !== index)
         : [...prev, index]
     );
+  };
+
+  const addNote = () => {
+    if (!noteText.trim()) return;
+
+    const timestamp = new Date().toLocaleString();
+    setNotes((prev) => [`${timestamp}: ${noteText.trim()}`, ...prev]);
+    setNoteText("");
   };
 
   const handleUpload = async () => {
@@ -43,6 +53,8 @@ export default function Home() {
     setError("");
     setCarePlan(null);
     setCompletedTasks([]);
+    setNotes([]);
+    setNoteText("");
 
     const formData = new FormData();
     formData.append("file", file);
@@ -137,6 +149,12 @@ export default function Home() {
             {carePlan && totalTasks > 0 && (
               <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
                 Task progress: {completedCount} of {totalTasks} completed
+              </div>
+            )}
+
+            {notes.length > 0 && (
+              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                Notes added: {notes.length}
               </div>
             )}
 
@@ -307,6 +325,39 @@ export default function Home() {
                     <p className="text-slate-600">
                       No follow-up actions listed.
                     </p>
+                  )}
+                </section>
+
+                <section className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+                  <h3 className="mb-3 text-xl font-semibold">
+                    📝 Caregiver Notes
+                  </h3>
+
+                  <textarea
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    placeholder="Example: Mom seemed more confused today or missed morning medication."
+                    className="min-h-28 w-full rounded-xl border border-slate-300 bg-white p-3 text-slate-800 outline-none focus:border-blue-500"
+                  />
+
+                  <button
+                    onClick={addNote}
+                    className="mt-3 rounded-xl bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900"
+                  >
+                    Add Note
+                  </button>
+
+                  {notes.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {notes.map((note, index) => (
+                        <div
+                          key={index}
+                          className="rounded-lg border border-slate-200 bg-white p-3 text-sm leading-6 text-slate-700"
+                        >
+                          {note}
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </section>
 
