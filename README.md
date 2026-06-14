@@ -65,6 +65,56 @@ Built as a submission for the ACL (Administration for Community Living) Caregive
 
 ---
 
+## 📸 Application Screenshots
+
+### Upload & Document Processing
+
+![Upload Screen](docs/screenshots/upload-screen.png)
+
+Upload discharge instructions, medication lists, PDFs, or images for AI-powered analysis.
+
+---
+
+### Care Plan Dashboard
+
+![Care Plan Dashboard](docs/screenshots/care-plan-dashboard.png)
+
+CareGuide AI converts complex healthcare documents into caregiver-friendly summaries, medications, warning signs, and follow-up actions.
+
+---
+
+### Daily Task Checklist
+
+![Task Checklist](docs/screenshots/task-checklist.png)
+
+Interactive caregiver task management helps ensure important care activities are completed and tracked.
+
+---
+
+### Symptom & Observation Tracking
+
+![Symptom Tracker](docs/screenshots/symptom-tracker.png)
+
+Caregivers can log symptoms, observations, and monitor changes over time.
+
+---
+
+### AI Caregiver Assistant
+
+![AI Assistant](docs/screenshots/ai-assistant.png)
+
+Context-aware caregiver support powered by AI. The assistant uses the generated care plan, symptoms, notes, and timeline to answer caregiver questions while maintaining safety guardrails.
+
+---
+
+### Family Care Summary
+
+![Family Summary](docs/screenshots/family-summary.png)
+
+Generate shareable summaries for family members, backup caregivers, and care team coordination.
+
+---
+
 ## 🏗 Architecture
 
 ```text
@@ -236,31 +286,39 @@ The following are excluded from source control:
 
 ### Phase 1 — Completed ✅
 
-* Document upload
-* PDF extraction
-* OCR support
-* AI-generated care plans
-* Structured JSON responses
+* Document Upload
+* PDF Extraction
+* OCR Processing
+* AI Care Plan Generation
+* Structured JSON Care Plans
 
 ### Phase 2 — Completed ✅
 
-* Interactive caregiver dashboard
-* Daily task checklist
-* Medication management
-* Follow-up tracker
-* Symptom tracking
-* Caregiver notes
-* Care timeline
-* Family care summary
-* PDF export
+* Interactive Caregiver Dashboard
+* Daily Task Checklist
+* Medication Management
+* Follow-Up Tracking
+* Symptom Tracking
+* Caregiver Notes
+* Care Timeline
+* Family Care Summary
+* PDF Export
 
-### Phase 3 — In Progress 🚧
+### Phase 3 — Completed (Initial Release) ✅
 
 * AI Caregiver Assistant
-* Context-aware caregiver chat
-* Enhanced caregiver decision support
-* Resource recommendations
-* Care history and longitudinal tracking
+* Context-Aware Caregiver Support
+* Human-in-the-Loop AI Design
+* Care Context Integration
+* Timeline-Based AI Interaction Logging
+
+### Future Enhancements 🚀
+
+* Suggested Questions
+* Conversation History
+* FHIR / EMR Integration
+* Community Resource Recommendations
+* Multi-Caregiver Collaboration
 
 ---
 
