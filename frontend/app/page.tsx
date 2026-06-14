@@ -27,6 +27,7 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [carePlan, setCarePlan] = useState<CarePlan | null>(null);
   const [completedTasks, setCompletedTasks] = useState<number[]>([]);
+  const [completedFollowUps, setCompletedFollowUps] = useState<number[]>([]);
   const [noteText, setNoteText] = useState("");
   const [notes, setNotes] = useState<string[]>([]);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
@@ -43,13 +44,27 @@ export default function Home() {
     const isCompleted = completedTasks.includes(index);
 
     setCompletedTasks((prev) =>
-      isCompleted
-        ? prev.filter((item) => item !== index)
-        : [...prev, index]
+      isCompleted ? prev.filter((item) => item !== index) : [...prev, index]
     );
 
     addTimelineEvent(
       isCompleted ? `Reopened task: ${task}` : `Completed task: ${task}`
+    );
+  };
+
+  const toggleFollowUp = (index: number, item: string) => {
+    const isCompleted = completedFollowUps.includes(index);
+
+    setCompletedFollowUps((prev) =>
+      isCompleted
+        ? prev.filter((followUp) => followUp !== index)
+        : [...prev, index]
+    );
+
+    addTimelineEvent(
+      isCompleted
+        ? `Reopened follow-up action: ${item}`
+        : `Completed follow-up action: ${item}`
     );
   };
 
@@ -74,6 +89,7 @@ export default function Home() {
     setError("");
     setCarePlan(null);
     setCompletedTasks([]);
+    setCompletedFollowUps([]);
     setNotes([]);
     setNoteText("");
     setTimeline([]);
@@ -106,6 +122,9 @@ export default function Home() {
 
   const completedCount = completedTasks.length;
   const totalTasks = carePlan?.daily_tasks?.length || 0;
+
+  const completedFollowUpCount = completedFollowUps.length;
+  const totalFollowUps = carePlan?.follow_up?.length || 0;
 
   return (
     <main className="min-h-screen bg-slate-100 px-6 py-10 text-slate-900">
@@ -172,6 +191,12 @@ export default function Home() {
             {carePlan && totalTasks > 0 && (
               <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
                 Task progress: {completedCount} of {totalTasks} completed
+              </div>
+            )}
+
+            {carePlan && totalFollowUps > 0 && (
+              <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+                Follow-up progress: {completedFollowUpCount} of {totalFollowUps} completed
               </div>
             )}
 
@@ -335,20 +360,50 @@ export default function Home() {
                 </section>
 
                 <section className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-                  <h3 className="mb-3 text-xl font-semibold">
-                    📅 Follow-Up Actions
-                  </h3>
+                  <div className="mb-3 flex items-center justify-between gap-4">
+                    <h3 className="text-xl font-semibold">
+                      📅 Follow-Up Tracker
+                    </h3>
+
+                    {totalFollowUps > 0 && (
+                      <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-slate-700">
+                        {completedFollowUpCount}/{totalFollowUps} done
+                      </span>
+                    )}
+                  </div>
 
                   {carePlan.follow_up?.length > 0 ? (
                     <ul className="space-y-2">
-                      {carePlan.follow_up.map((item, index) => (
-                        <li
-                          key={index}
-                          className="rounded-lg bg-white p-3 text-slate-700"
-                        >
-                          {item}
-                        </li>
-                      ))}
+                      {carePlan.follow_up.map((item, index) => {
+                        const isCompleted = completedFollowUps.includes(index);
+
+                        return (
+                          <li key={index}>
+                            <label
+                              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${
+                                isCompleted
+                                  ? "border-blue-200 bg-blue-50 text-slate-500"
+                                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isCompleted}
+                                onChange={() => toggleFollowUp(index, item)}
+                                className="mt-1 h-5 w-5"
+                              />
+
+                              <span
+                                className={`leading-7 ${
+                                  isCompleted ? "line-through" : ""
+                                }`}
+                              >
+                                {item}
+                              </span>
+                            </label>
+                          </li>
+                        );
+                      })}
                     </ul>
                   ) : (
                     <p className="text-slate-600">
@@ -413,8 +468,8 @@ export default function Home() {
                     </div>
                   ) : (
                     <p className="text-slate-600">
-                      Timeline events will appear as you complete tasks or add
-                      notes.
+                      Timeline events will appear as you complete tasks, follow
+                      up actions, or add notes.
                     </p>
                   )}
                 </section>
