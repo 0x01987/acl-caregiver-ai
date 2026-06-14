@@ -184,17 +184,18 @@ CareGuide AI directly supports:
 acl-caregiver-ai/
 │
 ├── README.md
-├── .gitignore
-│
 ├── backend/
-│   ├── app/
-│   ├── uploads/
-│   ├── requirements.txt
-│   └── .env
-│
 ├── frontend/
 │
-└── docs/
+├── docs/
+│   ├── caregiver-personas.md
+│   ├── user-stories.md
+│   ├── evaluation-plan.md
+│   ├── phase2-testing-plan.md
+│   ├── acl-submission-outline.md
+│   └── screenshots/
+│
+└── .gitignore
 ```
 
 ---
