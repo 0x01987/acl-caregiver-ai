@@ -43,6 +43,9 @@ export default function Home() {
   const [notes, setNotes] = useState<string[]>([]);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [copyMessage, setCopyMessage] = useState("");
+  const [assistantQuestion, setAssistantQuestion] = useState("");
+  const [assistantAnswer, setAssistantAnswer] = useState("");
+  const [assistantLoading, setAssistantLoading] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -54,6 +57,61 @@ export default function Home() {
 
   const exportCareSummary = () => {
     window.print();
+  };
+
+  const buildCareContext = () => {
+    return {
+      care_plan: carePlan,
+      completed_tasks: completedTasks,
+      completed_follow_ups: completedFollowUps,
+      logged_symptoms: loggedSymptoms,
+      caregiver_notes: notes,
+      timeline,
+    };
+  };
+
+  const askCareGuide = async () => {
+    if (!carePlan) {
+      setAssistantAnswer("Please generate a care plan first.");
+      return;
+    }
+
+    if (!assistantQuestion.trim()) {
+      setAssistantAnswer("Please enter a question first.");
+      return;
+    }
+
+    setAssistantLoading(true);
+    setAssistantAnswer("");
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/assistant", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          question: assistantQuestion,
+          care_context: buildCareContext(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setAssistantAnswer(data.detail || "Unable to get assistant response.");
+        return;
+      }
+
+      setAssistantAnswer(data.answer || "No response received.");
+      addTimelineEvent(`Asked CareGuide AI: ${assistantQuestion}`);
+      setAssistantQuestion("");
+    } catch (error) {
+      console.error(error);
+      setAssistantAnswer("Unable to contact CareGuide AI. Please try again.");
+    } finally {
+      setAssistantLoading(false);
+    }
   };
 
   const copyFamilySummary = async () => {
@@ -84,7 +142,9 @@ ${
   carePlan.daily_tasks?.length > 0
     ? carePlan.daily_tasks
         .map((task, index) =>
-          completedTasks.includes(index) ? `- [Done] ${task}` : `- [Pending] ${task}`
+          completedTasks.includes(index)
+            ? `- [Done] ${task}`
+            : `- [Pending] ${task}`
         )
         .join("\n")
     : "None listed"
@@ -226,6 +286,8 @@ ${
     setNoteText("");
     setTimeline([]);
     setCopyMessage("");
+    setAssistantQuestion("");
+    setAssistantAnswer("");
 
     const formData = new FormData();
     formData.append("file", file);
@@ -427,6 +489,44 @@ ${
                   </p>
                 </section>
 
+                <section className="rounded-xl border border-indigo-200 bg-indigo-50 p-5 print:hidden">
+                  <h3 className="mb-3 text-xl font-semibold">
+                    🤖 Ask CareGuide AI
+                  </h3>
+
+                  <p className="mb-4 leading-7 text-slate-700">
+                    Ask a caregiver-focused question based on the current care
+                    plan, symptoms, notes, and timeline.
+                  </p>
+
+                  <textarea
+                    value={assistantQuestion}
+                    onChange={(e) => setAssistantQuestion(e.target.value)}
+                    placeholder="Example: Mom seems more confused today. What should I do?"
+                    className="min-h-24 w-full rounded-xl border border-indigo-200 bg-white p-3 text-slate-800 outline-none focus:border-indigo-500"
+                  />
+
+                  <button
+                    onClick={askCareGuide}
+                    disabled={assistantLoading}
+                    className="mt-3 rounded-xl bg-indigo-700 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                  >
+                    {assistantLoading ? "Thinking..." : "Ask CareGuide AI"}
+                  </button>
+
+                  {assistantAnswer && (
+                    <div className="mt-4 rounded-xl border border-indigo-100 bg-white p-4 text-sm leading-7 text-slate-700">
+                      {assistantAnswer}
+                    </div>
+                  )}
+
+                  <p className="mt-3 text-xs leading-5 text-slate-600">
+                    CareGuide AI provides caregiver support only. It does not
+                    diagnose, prescribe, or replace licensed medical guidance.
+                  </p>
+                </section>
+
+                {/* Keep your existing dashboard sections below this line */}
                 <section className="rounded-xl border border-slate-200 bg-slate-50 p-5">
                   <div className="mb-3 flex items-center justify-between gap-4">
                     <h3 className="text-xl font-semibold">
@@ -751,7 +851,7 @@ ${
                   ) : (
                     <p className="text-slate-600">
                       Timeline events will appear as you complete tasks, follow
-                      up actions, log symptoms, or add notes.
+                      up actions, log symptoms, ask the assistant, or add notes.
                     </p>
                   )}
                 </section>
