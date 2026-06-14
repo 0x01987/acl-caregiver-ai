@@ -4,14 +4,21 @@ import fitz
 import pytesseract
 from PIL import Image
 from fastapi import APIRouter, UploadFile, File, HTTPException
+from pydantic import BaseModel
+
 from app.services.extractor import generate_care_plan
+from app.services.assistant import generate_caregiver_assistant_response
 
 router = APIRouter()
 
-# Update this path if your Tesseract installed somewhere else
 pytesseract.pytesseract.tesseract_cmd = (
     r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 )
+
+
+class AssistantRequest(BaseModel):
+    question: str
+    care_context: dict
 
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
@@ -50,11 +57,10 @@ async def extract_care_plan(file: UploadFile = File(...)):
     if ext == ".pdf":
         document_text = extract_text_from_pdf(file_bytes)
 
-        # If PDF has no embedded text, try OCR page images later
         if not document_text:
             raise HTTPException(
                 status_code=400,
-                detail="No readable text found. This may be a scanned PDF. Scanned PDF OCR will be added next.",
+                detail="No readable text found. This may be a scanned PDF. Try uploading a clearer image or text-based PDF.",
             )
 
     elif ext == ".txt":
@@ -78,3 +84,26 @@ async def extract_care_plan(file: UploadFile = File(...)):
     care_plan = generate_care_plan(document_text)
 
     return care_plan
+
+
+@router.post("/assistant")
+async def caregiver_assistant(request: AssistantRequest):
+    if not request.question.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Question cannot be empty.",
+        )
+
+    try:
+        answer = generate_caregiver_assistant_response(
+            request.question,
+            request.care_context,
+        )
+
+        return {"answer": answer}
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=str(e),
+        )
