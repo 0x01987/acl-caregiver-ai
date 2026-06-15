@@ -140,6 +140,16 @@ setAssistantQuestion("");
       setAssistantLoading(false);
     }
   };
+ const generateCareStatusReport = async () => {
+  setAssistantQuestion(
+    "Generate a concise care status report for today. Include completed tasks, remaining tasks, completed follow-up actions, pending follow-up actions, logged symptoms, caregiver notes, and recent timeline activity. Keep it caregiver-friendly and action-oriented."
+  );
+
+  setTimeout(() => {
+    const button = document.getElementById("ask-careguide-button");
+    button?.click();
+  }, 100);
+};
 
   const copyFamilySummary = async () => {
     if (!carePlan) return;
@@ -526,17 +536,24 @@ ${
                     plan, symptoms, notes, and timeline.
                   </p>
 
-                 <div className="mb-4 flex flex-wrap gap-2">
-                   {suggestedQuestions.map((question) => (
-                     <button
-                       key={question}
-                       onClick={() => setAssistantQuestion(question)}
-                       className="rounded-full border border-indigo-200 bg-white px-3 py-2 text-xs font-medium text-indigo-800 hover:bg-indigo-100"
-                      >
-                       {question}
-                      </button>
-                    ))}
-                  </div>
+                  <div className="mb-4 flex flex-wrap gap-2">
+                  <button
+                   onClick={generateCareStatusReport}
+                   className="rounded-full border border-indigo-300 bg-indigo-700 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-800"
+  >
+    📊 Generate Care Status Report
+  </button>
+
+  {suggestedQuestions.map((question) => (
+    <button
+      key={question}
+      onClick={() => setAssistantQuestion(question)}
+      className="rounded-full border border-indigo-200 bg-white px-3 py-2 text-xs font-medium text-indigo-800 hover:bg-indigo-100"
+    >
+      {question}
+    </button>
+  ))}
+</div>
 
                   <textarea
                     value={assistantQuestion}
@@ -546,19 +563,35 @@ ${
                   />
 
                   <button
-                    onClick={askCareGuide}
+                    id="ask-careguide-button"
+		    onClick={askCareGuide}
                     disabled={assistantLoading}
                     className="mt-3 rounded-xl bg-indigo-700 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-800 disabled:cursor-not-allowed disabled:bg-slate-400"
                   >
                     {assistantLoading ? "Thinking..." : "Ask CareGuide AI"}
                   </button>
 
-                  {assistantAnswer && (
-                    <div className="mt-4 rounded-xl border border-indigo-100 bg-white p-4 text-sm leading-7 text-slate-700">
-                      {assistantAnswer}
-                    </div>
-                  )}
+{assistantAnswer && (
+  <div className="mt-4 rounded-2xl border-2 border-indigo-300 bg-indigo-50 p-5 shadow-sm">
+    <div className="mb-3 flex items-center gap-2">
+      <span className="text-xl">🤖</span>
 
+      <p className="font-semibold text-indigo-900">
+        CareGuide AI Response
+      </p>
+    </div>
+
+    <div className="whitespace-pre-wrap text-base leading-8 text-slate-800">
+      {assistantAnswer.includes("Care Status Report") ? (
+  <div className="rounded-xl border border-green-300 bg-green-50 p-4">
+    {assistantAnswer}
+  </div>
+) : (
+  assistantAnswer
+)}
+    </div>
+  </div>
+)}
 {assistantHistory.length > 0 && (
   <div className="mt-4 space-y-3">
     <p className="text-sm font-semibold text-indigo-900">
@@ -697,13 +730,18 @@ ${
                   <h3 className="mb-3 text-xl font-semibold">
                     ⚠ Warning Signs
                   </h3>
+		   <div className="mb-4 rounded-xl border border-red-300 bg-red-100 p-4">
+  <p className="font-semibold text-red-900">
+    Important: Contact a healthcare provider if any warning signs occur or worsen.
+  </p>
+</div>
 
                   {carePlan.warning_signs?.length > 0 ? (
                     <ul className="space-y-2">
                       {carePlan.warning_signs.map((warning, index) => (
                         <li
                           key={index}
-                          className="rounded-lg bg-white p-3 text-slate-800"
+                          className="rounded-lg border border-red-200 bg-red-50 p-4 font-medium text-red-900"
                         >
                           {warning}
                         </li>
@@ -824,7 +862,7 @@ ${
                         {loggedSymptoms.map((symptom) => (
                           <span
                             key={symptom}
-                            className="rounded-full bg-white px-3 py-1 text-sm font-medium text-purple-800"
+                            className="rounded-full border border-purple-300 bg-white px-3 py-2 text-sm font-semibold text-purple-900 shadow-sm"
                           >
                             {symptom}
                           </span>
