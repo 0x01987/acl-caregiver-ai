@@ -23,6 +23,12 @@ type TimelineItem = {
   event: string;
 };
 
+type AssistantMessage = {
+  question: string;
+  answer: string;
+  time: string;
+};
+
 const presetSymptoms = [
   "Confusion",
   "Fatigue",
@@ -53,6 +59,7 @@ export default function Home() {
   const [copyMessage, setCopyMessage] = useState("");
   const [assistantQuestion, setAssistantQuestion] = useState("");
   const [assistantAnswer, setAssistantAnswer] = useState("");
+  const [assistantHistory, setAssistantHistory] = useState<AssistantMessage[]>([]);
   const [assistantLoading, setAssistantLoading] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -111,9 +118,21 @@ export default function Home() {
         return;
       }
 
-      setAssistantAnswer(data.answer || "No response received.");
-      addTimelineEvent(`Asked CareGuide AI: ${assistantQuestion}`);
-      setAssistantQuestion("");
+const answer = data.answer || "No response received.";
+
+setAssistantAnswer(answer);
+
+setAssistantHistory((prev) => [
+  {
+    question: assistantQuestion,
+    answer,
+    time: currentTime(),
+  },
+  ...prev,
+]);
+
+addTimelineEvent(`Asked CareGuide AI: ${assistantQuestion}`);
+setAssistantQuestion("");
     } catch (error) {
       console.error(error);
       setAssistantAnswer("Unable to contact CareGuide AI. Please try again.");
@@ -296,7 +315,7 @@ ${
     setCopyMessage("");
     setAssistantQuestion("");
     setAssistantAnswer("");
-
+    setAssistantHistory([]);
     const formData = new FormData();
     formData.append("file", file);
 
@@ -539,6 +558,39 @@ ${
                       {assistantAnswer}
                     </div>
                   )}
+
+{assistantHistory.length > 0 && (
+  <div className="mt-4 space-y-3">
+    <p className="text-sm font-semibold text-indigo-900">
+      Conversation History
+    </p>
+
+    {assistantHistory.map((message, index) => (
+      <div
+        key={index}
+        className="rounded-xl border border-indigo-100 bg-white p-4"
+      >
+        <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+          {message.time}
+        </p>
+
+        <p className="mt-2 text-sm font-semibold text-slate-800">
+          Caregiver:
+        </p>
+        <p className="mt-1 text-sm leading-6 text-slate-700">
+          {message.question}
+        </p>
+
+        <p className="mt-3 text-sm font-semibold text-slate-800">
+          CareGuide AI:
+        </p>
+        <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+          {message.answer}
+        </p>
+      </div>
+    ))}
+  </div>
+)}
 
                   <p className="mt-3 text-xs leading-5 text-slate-600">
                     CareGuide AI provides caregiver support only. It does not
