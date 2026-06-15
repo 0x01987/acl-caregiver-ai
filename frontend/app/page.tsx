@@ -32,6 +32,14 @@ const presetSymptoms = [
   "Trouble sleeping",
 ];
 
+const suggestedQuestions = [
+  "What warning signs should I monitor?",
+  "What follow-up actions remain?",
+  "Summarize today's care status.",
+  "Create a family update.",
+  "Review today's symptoms.",
+];
+
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [carePlan, setCarePlan] = useState<CarePlan | null>(null);
@@ -498,6 +506,18 @@ ${
                     Ask a caregiver-focused question based on the current care
                     plan, symptoms, notes, and timeline.
                   </p>
+
+                 <div className="mb-4 flex flex-wrap gap-2">
+                   {suggestedQuestions.map((question) => (
+                     <button
+                       key={question}
+                       onClick={() => setAssistantQuestion(question)}
+                       className="rounded-full border border-indigo-200 bg-white px-3 py-2 text-xs font-medium text-indigo-800 hover:bg-indigo-100"
+                      >
+                       {question}
+                      </button>
+                    ))}
+                  </div>
 
                   <textarea
                     value={assistantQuestion}
