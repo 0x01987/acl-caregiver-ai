@@ -377,15 +377,13 @@ ${
   const totalFollowUps = carePlan?.follow_up?.length || 0;
 
   return (
-    <main
+<main
   className={`min-h-screen px-6 py-10 ${
-    highContrast
-      ? "bg-black text-white"
-      : "bg-slate-100 text-slate-900"
+    highContrast ? "high-contrast" : "bg-slate-100 text-slate-900"
   } ${largeText ? "text-lg" : ""}`}
 >
       <div className="mx-auto max-w-6xl">
-        <section className="mb-8 rounded-2xl bg-white p-8 shadow-sm">
+        <section className="mb-8 rounded-2xl bg-white p-8 text-slate-900 shadow-sm">
           <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-blue-700">
             ACL Caregiver AI Challenge MVP
           </p>
@@ -402,8 +400,8 @@ ${
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[380px_1fr]">
-          <div className="rounded-2xl bg-white p-6 shadow-sm print:hidden">
-           <div className="mb-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="rounded-2xl bg-white p-6 text-slate-900 shadow-sm print:hidden">
+           <div className="mb-5 rounded-xl border border-slate-200 bg-white p-4 text-slate-900">
   <p className="mb-3 text-sm font-semibold text-slate-700">
     Accessibility Options
   </p>
@@ -527,7 +525,7 @@ ${
             </p>
           </div>
 
-          <div className="rounded-2xl bg-white p-6 shadow-sm print:rounded-none print:shadow-none">
+          <div className="rounded-2xl bg-white p-6 text-slate-900 shadow-sm print:rounded-none print:shadow-none">
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-semibold">Care Plan Dashboard</h2>
@@ -809,11 +807,11 @@ ${
                   )}
                 </section>
 
-                <section className="rounded-xl border border-amber-200 bg-amber-50 p-5">
-                  <h3 className="mb-3 text-xl font-semibold">
+                <section className="warning-signs-card rounded-xl border border-red-300 bg-red-50 p-5 text-red-950">
+                  <h3 className="mb-3 text-xl font-bold text-red-950">
                     ⚠ Warning Signs
-                  </h3>
-		   <div className="mb-4 rounded-xl border border-red-300 bg-red-100 p-4">
+                   </h3>
+		   <div className="warning-alert mb-4 rounded-xl border border-red-300 bg-red-100 p-4">
   <p className="font-semibold text-red-900">
     Important: Contact a healthcare provider if any warning signs occur or worsen.
   </p>
@@ -824,14 +822,14 @@ ${
                       {carePlan.warning_signs.map((warning, index) => (
                         <li
                           key={index}
-                          className="rounded-lg border border-red-200 bg-red-50 p-4 font-medium text-red-900"
+                          className="warning-item rounded-lg border border-red-200 bg-red-50 p-4 font-medium text-red-900"
                         >
                           {warning}
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-slate-600">No warning signs listed.</p>
+                    <p className="text-red-900">No warning signs listed.</p>
                   )}
                 </section>
 
@@ -996,7 +994,7 @@ ${
                   )}
                 </section>
 
-                <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 print:hidden">
+                <section className="family-summary-card rounded-xl border border-emerald-200 bg-emerald-50 p-5 print:hidden">
                   <h3 className="mb-3 text-xl font-semibold">
                     👨‍👩‍👧 Family Care Summary
                   </h3>
