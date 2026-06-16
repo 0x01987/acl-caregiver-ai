@@ -53,6 +53,8 @@ export default function Home() {
   const [emergencyContact, setEmergencyContact] = useState("");
   const [careFocus, setCareFocus] = useState("");
   const [carePlan, setCarePlan] = useState<CarePlan | null>(null);
+  const [largeText, setLargeText] = useState(false);
+  const [highContrast, setHighContrast] = useState(false);
   const [completedTasks, setCompletedTasks] = useState<number[]>([]);
   const [completedFollowUps, setCompletedFollowUps] = useState<number[]>([]);
   const [loggedSymptoms, setLoggedSymptoms] = useState<string[]>([]);
@@ -375,7 +377,13 @@ ${
   const totalFollowUps = carePlan?.follow_up?.length || 0;
 
   return (
-    <main className="min-h-screen bg-slate-100 px-6 py-10 text-slate-900">
+    <main
+  className={`min-h-screen px-6 py-10 ${
+    highContrast
+      ? "bg-black text-white"
+      : "bg-slate-100 text-slate-900"
+  } ${largeText ? "text-lg" : ""}`}
+>
       <div className="mx-auto max-w-6xl">
         <section className="mb-8 rounded-2xl bg-white p-8 shadow-sm">
           <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-blue-700">
@@ -395,6 +403,27 @@ ${
 
         <section className="grid gap-6 lg:grid-cols-[380px_1fr]">
           <div className="rounded-2xl bg-white p-6 shadow-sm print:hidden">
+           <div className="mb-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+  <p className="mb-3 text-sm font-semibold text-slate-700">
+    Accessibility Options
+  </p>
+
+  <div className="flex flex-col gap-2">
+    <button
+      onClick={() => setLargeText((prev) => !prev)}
+      className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100"
+    >
+      🔍 {largeText ? "Turn Off Large Text" : "Turn On Large Text"}
+    </button>
+
+    <button
+      onClick={() => setHighContrast((prev) => !prev)}
+      className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100"
+    >
+      🌓 {highContrast ? "Turn Off High Contrast" : "Turn On High Contrast"}
+    </button>
+  </div>
+</div>
             <h2 className="mb-3 text-2xl font-semibold">Upload Document</h2>
 
             <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-blue-300 bg-blue-50 p-8 text-center hover:bg-blue-100">
