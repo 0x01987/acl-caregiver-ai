@@ -48,6 +48,10 @@ const suggestedQuestions = [
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
+  const [careRecipientName, setCareRecipientName] = useState("");
+  const [primaryCaregiver, setPrimaryCaregiver] = useState("");
+  const [emergencyContact, setEmergencyContact] = useState("");
+  const [careFocus, setCareFocus] = useState("");
   const [carePlan, setCarePlan] = useState<CarePlan | null>(null);
   const [completedTasks, setCompletedTasks] = useState<number[]>([]);
   const [completedFollowUps, setCompletedFollowUps] = useState<number[]>([]);
@@ -74,16 +78,22 @@ export default function Home() {
     window.print();
   };
 
-  const buildCareContext = () => {
-    return {
-      care_plan: carePlan,
-      completed_tasks: completedTasks,
-      completed_follow_ups: completedFollowUps,
-      logged_symptoms: loggedSymptoms,
-      caregiver_notes: notes,
-      timeline,
-    };
+const buildCareContext = () => {
+  return {
+    care_recipient_profile: {
+      name: careRecipientName || "Not specified",
+      primary_caregiver: primaryCaregiver || "Not specified",
+      emergency_contact: emergencyContact || "Not specified",
+      care_focus: careFocus || "Not specified",
+    },
+    care_plan: carePlan,
+    completed_tasks: completedTasks,
+    completed_follow_ups: completedFollowUps,
+    logged_symptoms: loggedSymptoms,
+    caregiver_notes: notes,
+    timeline,
   };
+};
 
   const askCareGuide = async () => {
     if (!carePlan) {
@@ -156,6 +166,12 @@ setAssistantQuestion("");
 
     const summary = `
 CareGuide AI - Family Care Summary
+
+Care Recipient Profile:
+- Name: ${careRecipientName || "Not specified"}
+- Primary Caregiver: ${primaryCaregiver || "Not specified"}
+- Emergency Contact: ${emergencyContact || "Not specified"}
+- Care Focus: ${careFocus || "Not specified"}
 
 Summary:
 ${carePlan.summary || "Not specified"}
@@ -525,6 +541,44 @@ ${
                     {carePlan.summary || "Not specified"}
                   </p>
                 </section>
+           
+<section className="rounded-xl border border-cyan-200 bg-cyan-50 p-5 print:hidden">
+  <h3 className="mb-3 text-xl font-semibold">👤 Care Recipient Profile</h3>
+
+  <div className="grid gap-3 md:grid-cols-2">
+    <input
+      value={careRecipientName}
+      onChange={(e) => setCareRecipientName(e.target.value)}
+      placeholder="Care recipient name"
+      className="rounded-xl border border-cyan-200 bg-white p-3 text-slate-800 outline-none focus:border-cyan-500"
+    />
+
+    <input
+      value={primaryCaregiver}
+      onChange={(e) => setPrimaryCaregiver(e.target.value)}
+      placeholder="Primary caregiver"
+      className="rounded-xl border border-cyan-200 bg-white p-3 text-slate-800 outline-none focus:border-cyan-500"
+    />
+
+    <input
+      value={emergencyContact}
+      onChange={(e) => setEmergencyContact(e.target.value)}
+      placeholder="Emergency contact"
+      className="rounded-xl border border-cyan-200 bg-white p-3 text-slate-800 outline-none focus:border-cyan-500"
+    />
+
+    <input
+      value={careFocus}
+      onChange={(e) => setCareFocus(e.target.value)}
+      placeholder="Care focus, e.g. post-discharge recovery"
+      className="rounded-xl border border-cyan-200 bg-white p-3 text-slate-800 outline-none focus:border-cyan-500"
+    />
+  </div>
+
+  <p className="mt-3 text-sm leading-6 text-slate-600">
+    This optional profile helps personalize caregiver summaries and AI assistant responses.
+  </p>
+</section>
 
                 <section className="rounded-xl border border-indigo-200 bg-indigo-50 p-5 print:hidden">
                   <h3 className="mb-3 text-xl font-semibold">
