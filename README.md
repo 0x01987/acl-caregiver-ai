@@ -49,6 +49,15 @@ Try the live demo by uploading a healthcare document and generating a caregiver-
 * Follow-up recommendations
 * Structured JSON responses
 
+### 🧠 CareGuide AI Assistant
+
+* Context-aware caregiver assistant
+* Suggested caregiver questions
+* Care status report generation
+* Caregiver shift handoff report generation
+* Conversation history tracking
+* Personalized responses using caregiver data
+
 ### 📋 Caregiver Dashboard
 
 * Patient care summary
@@ -57,6 +66,7 @@ Try the live demo by uploading a healthcare document and generating a caregiver-
 * Progress tracking
 * Follow-up appointment tracker
 * Warning signs monitoring
+* Care recipient profile management
 
 ### 🩺 Care Coordination Tools
 
@@ -73,11 +83,23 @@ Try the live demo by uploading a healthcare document and generating a caregiver-
 * Copy-to-clipboard summary export
 * Care coordination support
 * Provider-ready care summaries
+* Caregiver shift handoff support
+
+### ♿ Accessibility Features
+
+* Large Text Mode
+* High Contrast Mode
+* Enhanced notification visibility
+* Color-coded care alerts
+* Mobile-friendly responsive design
+* Caregiver-friendly interface
 
 ### 📄 Export Features
 
 * Care summary PDF export
 * Printable caregiver dashboard
+* Family summary export
+* Caregiver handoff reporting
 
 ---
 
