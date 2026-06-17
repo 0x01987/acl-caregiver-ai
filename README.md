@@ -81,6 +81,16 @@ Try the live demo by uploading a healthcare document and generating a caregiver-
 
 ---
 
+## Accessibility Features
+
+- Large Text Mode
+- High Contrast Mode
+- Enhanced notification visibility
+- Caregiver-friendly dashboard layout
+- Color-coded care alerts
+
+---
+
 ## 📸 Application Screenshots
 
 ### Upload & Document Processing
