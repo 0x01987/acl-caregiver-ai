@@ -102,3 +102,27 @@ body {
 .high-contrast [class*="text-red-"] {
   color: #ffffff !important;
 }
+
+.high-contrast .copy-message {
+  background-color: #064e3b !important;
+  border-color: #6ee7b7 !important;
+  color: #ffffff !important;
+}
+
+.high-contrast .copy-message * {
+  color: #ffffff !important;
+}
+
+.high-contrast [class*="text-emerald-"] {
+  color: #ffffff !important;
+}
+
+.high-contrast .status-message {
+  background-color: #111827 !important;
+  border-color: #ffffff !important;
+  color: #ffffff !important;
+}
+
+.high-contrast .status-message * {
+  color: #ffffff !important;
+}

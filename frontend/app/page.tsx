@@ -476,13 +476,13 @@ ${
             )}
 
             {copyMessage && (
-              <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-                {copyMessage}
-              </div>
-            )}
+               <div className="status-message mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900">
+               {copyMessage}
+               </div>
+             )}
 
             {error && (
-              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              <div className="status-message mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-900">
                 {error}
               </div>
             )}
