@@ -163,6 +163,17 @@ setAssistantQuestion("");
   }, 100);
 };
 
+const generateShiftHandoffReport = async () => {
+  setAssistantQuestion(
+    "Generate a caregiver shift handoff report. Include the care recipient profile, completed tasks, pending tasks, completed follow-up actions, pending follow-up actions, logged symptoms, caregiver notes, recent timeline activity, and any important warning signs. Keep it concise, caregiver-friendly, and organized for the next caregiver."
+  );
+
+  setTimeout(() => {
+    const button = document.getElementById("ask-careguide-button");
+    button?.click();
+  }, 100);
+};
+
   const copyFamilySummary = async () => {
     if (!carePlan) return;
 
@@ -624,6 +635,13 @@ ${
   >
     📊 Generate Care Status Report
   </button>
+  
+  <button
+  onClick={generateShiftHandoffReport}
+  className="rounded-full border border-teal-300 bg-teal-700 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-800"
+>
+  📋 Generate Shift Handoff Report
+</button>
 
   {suggestedQuestions.map((question) => (
     <button
