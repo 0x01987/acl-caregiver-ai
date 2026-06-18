@@ -1,5 +1,6 @@
 import os
 import io
+import shutil
 import fitz
 import pytesseract
 from PIL import Image
@@ -10,10 +11,11 @@ from app.services.extractor import generate_care_plan
 from app.services.assistant import generate_caregiver_assistant_response
 
 router = APIRouter()
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
-pytesseract.pytesseract.tesseract_cmd = (
-    r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-)
+tesseract_cmd = os.getenv("TESSERACT_CMD") or shutil.which("tesseract")
+if tesseract_cmd:
+    pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
 
 
 class AssistantRequest(BaseModel):
@@ -24,9 +26,12 @@ class AssistantRequest(BaseModel):
 def extract_text_from_pdf(file_bytes: bytes) -> str:
     text = ""
 
-    with fitz.open(stream=file_bytes, filetype="pdf") as pdf:
-        for page in pdf:
-            text += page.get_text()
+    try:
+        with fitz.open(stream=file_bytes, filetype="pdf") as pdf:
+            for page in pdf:
+                text += page.get_text()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Unable to read this PDF.") from exc
 
     return text.strip()
 
@@ -36,8 +41,20 @@ def extract_text_from_txt(file_bytes: bytes) -> str:
 
 
 def extract_text_from_image(file_bytes: bytes) -> str:
-    image = Image.open(io.BytesIO(file_bytes))
-    text = pytesseract.image_to_string(image)
+    try:
+        image = Image.open(io.BytesIO(file_bytes))
+        image.verify()
+        image = Image.open(io.BytesIO(file_bytes))
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Unable to read this image.") from exc
+
+    try:
+        text = pytesseract.image_to_string(image)
+    except pytesseract.TesseractNotFoundError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="OCR is not configured on this server. Set TESSERACT_CMD or install Tesseract.",
+        ) from exc
     return text.strip()
 
 
@@ -53,6 +70,12 @@ async def extract_care_plan(file: UploadFile = File(...)):
 
     _, ext = os.path.splitext(file.filename.lower())
     file_bytes = await file.read()
+
+    if len(file_bytes) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail="File is too large. Upload a file under 10 MB.",
+        )
 
     if ext == ".pdf":
         document_text = extract_text_from_pdf(file_bytes)
@@ -81,7 +104,10 @@ async def extract_care_plan(file: UploadFile = File(...)):
             detail="No readable text found in uploaded document.",
         )
 
-    care_plan = generate_care_plan(document_text)
+    try:
+        care_plan = generate_care_plan(document_text)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     return care_plan
 
@@ -102,6 +128,11 @@ async def caregiver_assistant(request: AssistantRequest):
 
         return {"answer": answer}
 
+    except RuntimeError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=str(e),
+        )
     except Exception as e:
         raise HTTPException(
             status_code=500,

@@ -4,7 +4,12 @@ from openai import OpenAI
 
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+def get_openai_client() -> OpenAI:
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY is not configured.")
+    return OpenAI(api_key=api_key)
 
 
 def generate_caregiver_assistant_response(question: str, care_context: dict):
@@ -30,7 +35,7 @@ Caregiver Question:
 {question}
 """
 
-    response = client.chat.completions.create(
+    response = get_openai_client().chat.completions.create(
         model="gpt-4.1-mini",
         messages=[
             {

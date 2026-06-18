@@ -46,6 +46,20 @@ const suggestedQuestions = [
   "Review today's symptoms.",
 ];
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://127.0.0.1:8000";
+
+const urgentTerms = [
+  "chest pain",
+  "trouble breathing",
+  "difficulty breathing",
+  "fainting",
+  "unresponsive",
+  "stroke",
+  "severe bleeding",
+  "blue lips",
+];
+
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [careRecipientName, setCareRecipientName] = useState("");
@@ -97,28 +111,38 @@ const buildCareContext = () => {
   };
 };
 
-  const askCareGuide = async () => {
+  const askCareGuide = async (questionOverride?: string) => {
+    const question = (questionOverride ?? assistantQuestion).trim();
+
     if (!carePlan) {
       setAssistantAnswer("Please generate a care plan first.");
       return;
     }
 
-    if (!assistantQuestion.trim()) {
+    if (!question) {
       setAssistantAnswer("Please enter a question first.");
       return;
     }
 
+    const hasUrgentTerm = urgentTerms.some((term) =>
+      question.toLowerCase().includes(term)
+    );
+
     setAssistantLoading(true);
-    setAssistantAnswer("");
+    setAssistantAnswer(
+      hasUrgentTerm
+        ? "If this may be an emergency, call 911 or local emergency services now. CareGuide AI can help organize information, but it cannot rule out urgent danger."
+        : ""
+    );
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/assistant`, {
+      const response = await fetch(`${API_BASE_URL}/assistant`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          question: assistantQuestion,
+          question,
           care_context: buildCareContext(),
         }),
       });
@@ -136,14 +160,14 @@ setAssistantAnswer(answer);
 
 setAssistantHistory((prev) => [
   {
-    question: assistantQuestion,
+    question,
     answer,
     time: currentTime(),
   },
   ...prev,
 ]);
 
-addTimelineEvent(`Asked CareGuide AI: ${assistantQuestion}`);
+addTimelineEvent(`Asked CareGuide AI: ${question}`);
 setAssistantQuestion("");
     } catch (error) {
       console.error(error);
@@ -153,25 +177,15 @@ setAssistantQuestion("");
     }
   };
  const generateCareStatusReport = async () => {
-  setAssistantQuestion(
+  await askCareGuide(
     "Generate a concise care status report for today. Include completed tasks, remaining tasks, completed follow-up actions, pending follow-up actions, logged symptoms, caregiver notes, and recent timeline activity. Keep it caregiver-friendly and action-oriented."
   );
-
-  setTimeout(() => {
-    const button = document.getElementById("ask-careguide-button");
-    button?.click();
-  }, 100);
 };
 
 const generateShiftHandoffReport = async () => {
-  setAssistantQuestion(
+  await askCareGuide(
     "Generate a caregiver shift handoff report. Include the care recipient profile, completed tasks, pending tasks, completed follow-up actions, pending follow-up actions, logged symptoms, caregiver notes, recent timeline activity, and any important warning signs. Keep it concise, caregiver-friendly, and organized for the next caregiver."
   );
-
-  setTimeout(() => {
-    const button = document.getElementById("ask-careguide-button");
-    button?.click();
-  }, 100);
 };
 
   const copyFamilySummary = async () => {
@@ -261,7 +275,19 @@ ${
 `;
 
     try {
-      await navigator.clipboard.writeText(summary.trim());
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(summary.trim());
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = summary.trim();
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
       setCopyMessage("Family care summary copied to clipboard.");
       addTimelineEvent("Copied family care summary");
     } catch (error) {
@@ -359,7 +385,7 @@ ${
     formData.append("file", file);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/extract`, {
+      const response = await fetch(`${API_BASE_URL}/extract`, {
         method: "POST",
         body: formData,
       });
@@ -386,64 +412,136 @@ ${
 
   const completedFollowUpCount = completedFollowUps.length;
   const totalFollowUps = carePlan?.follow_up?.length || 0;
+  const taskPercent =
+    totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
+  const followUpPercent =
+    totalFollowUps > 0
+      ? Math.round((completedFollowUpCount / totalFollowUps) * 100)
+      : 0;
+  const nextStep = !file
+    ? "Choose a care document to begin."
+    : !carePlan
+      ? "Generate the care plan."
+      : completedCount < totalTasks
+        ? "Review today's remaining tasks."
+        : "Share an update or add notes.";
 
   return (
 <main
-  className={`min-h-screen px-6 py-10 ${
-    highContrast ? "high-contrast" : "bg-slate-100 text-slate-900"
+  className={`min-h-screen px-4 py-5 sm:px-6 sm:py-8 ${
+    highContrast ? "high-contrast" : "bg-stone-100 text-slate-950"
   } ${largeText ? "text-lg" : ""}`}
 >
-      <div className="mx-auto max-w-6xl">
-        <section className="mb-8 rounded-2xl bg-white p-8 text-slate-900 shadow-sm">
-          <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-blue-700">
-            ACL Caregiver AI Challenge MVP
-          </p>
-
-          <h1 className="mb-4 text-4xl font-bold tracking-tight">
-            CareGuide AI
-          </h1>
-
-          <p className="max-w-3xl text-lg leading-8 text-slate-700">
-            Upload discharge instructions, medication lists, or caregiver notes.
-            CareGuide AI converts complex care information into a clear,
-            caregiver-friendly action plan.
-          </p>
-        </section>
-
-        <section className="grid gap-6 lg:grid-cols-[380px_1fr]">
-          <div className="rounded-2xl bg-white p-6 text-slate-900 shadow-sm print:hidden">
-           <div className="mb-5 rounded-xl border border-slate-200 bg-white p-4 text-slate-900">
-  <p className="mb-3 text-sm font-semibold text-slate-700">
-    Accessibility Options
-  </p>
-
-  <div className="flex flex-col gap-2">
-    <button
-      onClick={() => setLargeText((prev) => !prev)}
-      className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100"
-    >
-      🔍 {largeText ? "Turn Off Large Text" : "Turn On Large Text"}
-    </button>
-
-    <button
-      onClick={() => setHighContrast((prev) => !prev)}
-      className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100"
-    >
-      🌓 {highContrast ? "Turn Off High Contrast" : "Turn On High Contrast"}
-    </button>
-  </div>
-</div>
-            <h2 className="mb-3 text-2xl font-semibold">Upload Document</h2>
-
-            <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-blue-300 bg-blue-50 p-8 text-center hover:bg-blue-100">
-              <div className="mb-3 text-5xl">📄</div>
-
-              <p className="mb-2 text-lg font-semibold text-slate-800">
-                Click to choose a file
+      <div className="mx-auto max-w-7xl">
+        <section className="mb-5 overflow-hidden rounded-lg border border-slate-200 bg-white text-slate-950 shadow-sm">
+          <div className="grid gap-0 lg:grid-cols-[1fr_360px]">
+            <div className="p-6 sm:p-8">
+              <p className="mb-2 text-sm font-bold uppercase text-teal-700">
+                ACL Caregiver AI Challenge
               </p>
 
-              <p className="mb-4 text-sm text-slate-600">
-                Supported files: TXT, PDF, JPG, PNG
+              <h1 className="mb-4 max-w-3xl text-4xl font-black tracking-tight sm:text-5xl">
+                CareGuide AI
+              </h1>
+
+              <p className="max-w-3xl text-xl leading-8 text-slate-700">
+                Turn discharge papers, medication lists, or caregiver notes into
+                a simple plan for today.
+              </p>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                {["Upload", "Review", "Share"].map((label, index) => (
+                  <div
+                    key={label}
+                    className="rounded-lg border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <p className="text-sm font-bold uppercase text-slate-500">
+                      Step {index + 1}
+                    </p>
+                    <p className="mt-1 text-lg font-black text-slate-950">
+                      {label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <aside className="border-t border-slate-200 bg-teal-900 p-6 text-white lg:border-l lg:border-t-0">
+              <p className="text-sm font-bold uppercase text-teal-100">
+                Next best action
+              </p>
+              <p className="mt-2 text-2xl font-black leading-8">{nextStep}</p>
+              <p className="mt-4 text-base leading-7 text-teal-50">
+                CareGuide organizes information only. A caregiver or clinician
+                always makes care decisions.
+              </p>
+            </aside>
+          </div>
+        </section>
+
+        <nav className="sticky top-0 z-10 mb-5 flex gap-2 overflow-x-auto border-y border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur print:hidden">
+          {[
+            ["Upload", "#upload"],
+            ["Plan", "#dashboard"],
+            ["Tasks", "#tasks"],
+            ["Ask AI", "#assistant"],
+            ["Share", "#share"],
+          ].map(([label, href]) => (
+            <a
+              key={href}
+              href={href}
+              className="min-h-12 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-800 hover:border-teal-500 hover:bg-teal-50"
+            >
+              {label}
+            </a>
+          ))}
+        </nav>
+
+        <section className="grid gap-5 lg:grid-cols-[360px_1fr]">
+          <div
+            id="upload"
+            className="rounded-lg border border-slate-200 bg-white p-5 text-slate-950 shadow-sm print:hidden lg:sticky lg:top-20 lg:self-start"
+          >
+            <div className="mb-5 grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setLargeText((prev) => !prev)}
+                className={`min-h-14 rounded-lg border px-3 py-2 text-sm font-black ${
+                  largeText
+                    ? "border-teal-700 bg-teal-700 text-white"
+                    : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
+                }`}
+              >
+                {largeText ? "Large text on" : "Large text"}
+              </button>
+
+              <button
+                onClick={() => setHighContrast((prev) => !prev)}
+                className={`min-h-14 rounded-lg border px-3 py-2 text-sm font-black ${
+                  highContrast
+                    ? "border-teal-700 bg-teal-700 text-white"
+                    : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
+                }`}
+              >
+                {highContrast ? "Contrast on" : "High contrast"}
+              </button>
+            </div>
+
+            <h2 className="mb-2 text-2xl font-black">Start Here</h2>
+            <p className="mb-4 text-base leading-7 text-slate-600">
+              Upload one document. The plan appears on the right.
+            </p>
+
+            <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-teal-300 bg-teal-50 p-7 text-center hover:bg-teal-100">
+              <div className="mb-3 grid h-14 w-14 place-items-center rounded-full bg-white text-2xl font-black text-teal-700">
+                1
+              </div>
+
+              <p className="mb-2 text-lg font-black text-slate-900">
+                Choose a care document
+              </p>
+
+              <p className="mb-4 text-sm leading-6 text-slate-600">
+                TXT, PDF, JPG, or PNG
               </p>
 
               <input
@@ -454,7 +552,7 @@ ${
               />
 
               {file && (
-                <p className="mt-3 rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700">
+                <p className="mt-3 max-w-full rounded-lg bg-white px-4 py-2 text-sm font-bold text-slate-700">
                   Selected: {file.name}
                 </p>
               )}
@@ -463,7 +561,7 @@ ${
             <button
               onClick={handleUpload}
               disabled={loading}
-              className="mt-5 w-full rounded-xl bg-blue-700 px-5 py-3 text-base font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+              className="mt-4 min-h-14 w-full rounded-lg bg-teal-700 px-5 py-3 text-lg font-black text-white hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-400"
             >
               {loading ? "Analyzing document..." : "Generate Care Plan"}
             </button>
@@ -472,16 +570,16 @@ ${
               <>
                 <button
                   onClick={exportCareSummary}
-                  className="mt-4 w-full rounded-xl bg-slate-900 px-5 py-3 text-base font-semibold text-white hover:bg-slate-950"
+                  className="mt-4 min-h-12 w-full rounded-lg bg-slate-900 px-5 py-3 text-base font-black text-white hover:bg-slate-950"
                 >
-                  📄 Export Care Summary
+                  Export Care Summary
                 </button>
 
                 <button
                   onClick={copyFamilySummary}
-                  className="mt-4 w-full rounded-xl bg-emerald-700 px-5 py-3 text-base font-semibold text-white hover:bg-emerald-800"
+                  className="mt-3 min-h-12 w-full rounded-lg bg-emerald-700 px-5 py-3 text-base font-black text-white hover:bg-emerald-800"
                 >
-                  📋 Copy Family Summary
+                  Copy Family Summary
                 </button>
               </>
             )}
@@ -499,15 +597,38 @@ ${
             )}
 
             {carePlan && totalTasks > 0 && (
-              <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
-                Task progress: {completedCount} of {totalTasks} completed
+              <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-900">
+                <div className="flex items-center justify-between gap-3 font-black">
+                  <span>Tasks</span>
+                  <span>{taskPercent}%</span>
+                </div>
+                <div className="mt-2 h-3 rounded-full bg-white">
+                  <div
+                    className="h-3 rounded-full bg-green-700"
+                    style={{ width: `${taskPercent}%` }}
+                  />
+                </div>
+                <p className="mt-2 font-semibold">
+                  {completedCount} of {totalTasks} completed
+                </p>
               </div>
             )}
 
             {carePlan && totalFollowUps > 0 && (
-              <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-                Follow-up progress: {completedFollowUpCount} of{" "}
-                {totalFollowUps} completed
+              <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+                <div className="flex items-center justify-between gap-3 font-black">
+                  <span>Follow-ups</span>
+                  <span>{followUpPercent}%</span>
+                </div>
+                <div className="mt-2 h-3 rounded-full bg-white">
+                  <div
+                    className="h-3 rounded-full bg-blue-700"
+                    style={{ width: `${followUpPercent}%` }}
+                  />
+                </div>
+                <p className="mt-2 font-semibold">
+                  {completedFollowUpCount} of {totalFollowUps} completed
+                </p>
               </div>
             )}
 
@@ -536,13 +657,19 @@ ${
             </p>
           </div>
 
-          <div className="rounded-2xl bg-white p-6 text-slate-900 shadow-sm print:rounded-none print:shadow-none">
-            <div className="mb-4 flex items-start justify-between gap-4">
+          <div
+            id="dashboard"
+            className="rounded-lg border border-slate-200 bg-white p-5 text-slate-950 shadow-sm print:rounded-none print:shadow-none sm:p-6"
+          >
+            <div className="mb-5 flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-2xl font-semibold">Care Plan Dashboard</h2>
+                <p className="text-sm font-bold uppercase text-teal-700">
+                  Care workspace
+                </p>
+                <h2 className="text-3xl font-black">Today&apos;s Care Plan</h2>
                 {carePlan && (
-                  <p className="mt-1 text-sm text-slate-600">
-                    Generated by CareGuide AI
+                  <p className="mt-1 text-base text-slate-600">
+                    Generated by CareGuide AI. Review before acting.
                   </p>
                 )}
               </div>
@@ -550,22 +677,28 @@ ${
               {carePlan && (
                 <button
                   onClick={exportCareSummary}
-                  className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-950 print:hidden"
+                  className="min-h-12 rounded-lg bg-slate-900 px-5 py-3 text-sm font-black text-white hover:bg-slate-950 print:hidden"
                 >
-                  📄 Export
+                  Export
                 </button>
               )}
             </div>
 
             {!carePlan && !loading && (
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 text-slate-600">
-                Your generated caregiver dashboard will appear here after
-                uploading a document.
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-slate-700">
+                <p className="text-xl font-black text-slate-950">
+                  No care plan yet.
+                </p>
+                <p className="mt-2 max-w-2xl leading-7">
+                  Start by uploading a document on the left. After analysis,
+                  your summary, tasks, medicines, warning signs, and sharing
+                  tools will appear here.
+                </p>
               </div>
             )}
 
             {loading && (
-              <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 text-blue-800">
+              <div className="rounded-lg border border-teal-200 bg-teal-50 p-5 text-teal-900">
                 Analyzing the document and building a caregiver-friendly care
                 plan...
               </div>
@@ -573,43 +706,49 @@ ${
 
             {carePlan && (
               <div className="space-y-5">
-                <section className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-                  <h3 className="mb-2 text-xl font-semibold">📋 Summary</h3>
-                  <p className="leading-7 text-slate-700">
+                <section className="rounded-lg border border-slate-200 bg-slate-50 p-5">
+                  <p className="mb-2 text-sm font-bold uppercase text-slate-500">
+                    Quick summary
+                  </p>
+                  <h3 className="mb-2 text-2xl font-black">What this says</h3>
+                  <p className="text-lg leading-8 text-slate-700">
                     {carePlan.summary || "Not specified"}
                   </p>
                 </section>
            
-<section className="rounded-xl border border-cyan-200 bg-cyan-50 p-5 print:hidden">
-  <h3 className="mb-3 text-xl font-semibold">👤 Care Recipient Profile</h3>
+<section className="rounded-lg border border-cyan-200 bg-cyan-50 p-5 print:hidden">
+  <p className="mb-2 text-sm font-bold uppercase text-cyan-800">
+    Optional
+  </p>
+  <h3 className="mb-3 text-2xl font-black">Care Recipient Profile</h3>
 
   <div className="grid gap-3 md:grid-cols-2">
     <input
       value={careRecipientName}
       onChange={(e) => setCareRecipientName(e.target.value)}
       placeholder="Care recipient name"
-      className="rounded-xl border border-cyan-200 bg-white p-3 text-slate-800 outline-none focus:border-cyan-500"
+      className="min-h-12 rounded-lg border border-cyan-200 bg-white p-3 text-slate-800 outline-none focus:border-cyan-500"
     />
 
     <input
       value={primaryCaregiver}
       onChange={(e) => setPrimaryCaregiver(e.target.value)}
       placeholder="Primary caregiver"
-      className="rounded-xl border border-cyan-200 bg-white p-3 text-slate-800 outline-none focus:border-cyan-500"
+      className="min-h-12 rounded-lg border border-cyan-200 bg-white p-3 text-slate-800 outline-none focus:border-cyan-500"
     />
 
     <input
       value={emergencyContact}
       onChange={(e) => setEmergencyContact(e.target.value)}
       placeholder="Emergency contact"
-      className="rounded-xl border border-cyan-200 bg-white p-3 text-slate-800 outline-none focus:border-cyan-500"
+      className="min-h-12 rounded-lg border border-cyan-200 bg-white p-3 text-slate-800 outline-none focus:border-cyan-500"
     />
 
     <input
       value={careFocus}
       onChange={(e) => setCareFocus(e.target.value)}
       placeholder="Care focus, e.g. post-discharge recovery"
-      className="rounded-xl border border-cyan-200 bg-white p-3 text-slate-800 outline-none focus:border-cyan-500"
+      className="min-h-12 rounded-lg border border-cyan-200 bg-white p-3 text-slate-800 outline-none focus:border-cyan-500"
     />
   </div>
 
@@ -618,36 +757,42 @@ ${
   </p>
 </section>
 
-                <section className="rounded-xl border border-indigo-200 bg-indigo-50 p-5 print:hidden">
-                  <h3 className="mb-3 text-xl font-semibold">
-                    🤖 Ask CareGuide AI
-                  </h3>
+                <section
+                  id="assistant"
+                  className="rounded-lg border border-indigo-200 bg-indigo-50 p-5 print:hidden"
+                >
+                  <p className="mb-2 text-sm font-bold uppercase text-indigo-800">
+                    Ask for help
+                  </p>
+                  <h3 className="mb-3 text-2xl font-black">CareGuide AI</h3>
 
                   <p className="mb-4 leading-7 text-slate-700">
-                    Ask a caregiver-focused question based on the current care
-                    plan, symptoms, notes, and timeline.
+                    Ask about this care plan, logged symptoms, notes, and
+                    timeline.
                   </p>
 
-                  <div className="mb-4 flex flex-wrap gap-2">
+                  <div className="mb-4 grid gap-2 sm:grid-cols-2">
                   <button
                    onClick={generateCareStatusReport}
-                   className="rounded-full border border-indigo-300 bg-indigo-700 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-800"
+                   className="min-h-12 rounded-lg border border-indigo-300 bg-indigo-700 px-3 py-2 text-sm font-black text-white hover:bg-indigo-800"
   >
-    📊 Generate Care Status Report
+    Generate Status Report
   </button>
   
   <button
   onClick={generateShiftHandoffReport}
-  className="rounded-full border border-teal-300 bg-teal-700 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-800"
+  className="min-h-12 rounded-lg border border-teal-300 bg-teal-700 px-3 py-2 text-sm font-black text-white hover:bg-teal-800"
 >
-  📋 Generate Shift Handoff Report
+  Generate Handoff Report
 </button>
+                  </div>
 
+                  <div className="mb-4 flex flex-wrap gap-2">
   {suggestedQuestions.map((question) => (
     <button
       key={question}
       onClick={() => setAssistantQuestion(question)}
-      className="rounded-full border border-indigo-200 bg-white px-3 py-2 text-xs font-medium text-indigo-800 hover:bg-indigo-100"
+      className="min-h-10 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-bold text-indigo-800 hover:bg-indigo-100"
     >
       {question}
     </button>
@@ -658,14 +803,14 @@ ${
                     value={assistantQuestion}
                     onChange={(e) => setAssistantQuestion(e.target.value)}
                     placeholder="Example: Mom seems more confused today. What should I do?"
-                    className="min-h-24 w-full rounded-xl border border-indigo-200 bg-white p-3 text-slate-800 outline-none focus:border-indigo-500"
+                    className="min-h-28 w-full rounded-lg border border-indigo-200 bg-white p-3 text-slate-800 outline-none focus:border-indigo-500"
                   />
 
                   <button
                     id="ask-careguide-button"
-		    onClick={askCareGuide}
+                    onClick={() => askCareGuide()}
                     disabled={assistantLoading}
-                    className="mt-3 rounded-xl bg-indigo-700 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                    className="mt-3 min-h-12 w-full rounded-lg bg-indigo-700 px-4 py-2 text-base font-black text-white hover:bg-indigo-800 disabled:cursor-not-allowed disabled:bg-slate-400 sm:w-auto"
                   >
                     {assistantLoading ? "Thinking..." : "Ask CareGuide AI"}
                   </button>
@@ -731,14 +876,20 @@ ${
                 </section>
 
                 {/* Keep your existing dashboard sections below this line */}
-                <section className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+                <section
+                  id="tasks"
+                  className="rounded-lg border border-slate-200 bg-slate-50 p-5"
+                >
                   <div className="mb-3 flex items-center justify-between gap-4">
-                    <h3 className="text-xl font-semibold">
-                      ✅ Daily Tasks Checklist
-                    </h3>
+                    <div>
+                      <p className="text-sm font-bold uppercase text-slate-500">
+                        Do today
+                      </p>
+                      <h3 className="text-2xl font-black">Daily Tasks</h3>
+                    </div>
 
                     {totalTasks > 0 && (
-                      <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-slate-700">
+                      <span className="rounded-lg bg-white px-3 py-2 text-sm font-black text-slate-700">
                         {completedCount}/{totalTasks} done
                       </span>
                     )}
@@ -762,7 +913,7 @@ ${
                                 type="checkbox"
                                 checked={isCompleted}
                                 onChange={() => toggleTask(index, task)}
-                                className="mt-1 h-5 w-5 print:hidden"
+                                className="mt-1 h-6 w-6 print:hidden"
                               />
 
                               <span
@@ -783,8 +934,11 @@ ${
                   )}
                 </section>
 
-                <section className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-                  <h3 className="mb-3 text-xl font-semibold">💊 Medications</h3>
+                <section className="rounded-lg border border-slate-200 bg-slate-50 p-5">
+                  <p className="mb-2 text-sm font-bold uppercase text-slate-500">
+                    Review carefully
+                  </p>
+                  <h3 className="mb-3 text-2xl font-black">Medications</h3>
 
                   {carePlan.medications?.length > 0 ? (
                     <div className="overflow-x-auto">
@@ -825,11 +979,14 @@ ${
                   )}
                 </section>
 
-                <section className="warning-signs-card rounded-xl border border-red-300 bg-red-50 p-5 text-red-950">
-                  <h3 className="mb-3 text-xl font-bold text-red-950">
-                    ⚠ Warning Signs
+                <section className="warning-signs-card rounded-lg border-2 border-red-400 bg-red-50 p-5 text-red-950">
+                  <p className="mb-2 text-sm font-bold uppercase text-red-800">
+                    Pay attention
+                  </p>
+                  <h3 className="mb-3 text-2xl font-black text-red-950">
+                    Warning Signs
                    </h3>
-		   <div className="warning-alert mb-4 rounded-xl border border-red-300 bg-red-100 p-4">
+		   <div className="warning-alert mb-4 rounded-lg border border-red-300 bg-red-100 p-4">
   <p className="font-semibold text-red-900">
     Important: Contact a healthcare provider if any warning signs occur or worsen.
   </p>
@@ -840,7 +997,7 @@ ${
                       {carePlan.warning_signs.map((warning, index) => (
                         <li
                           key={index}
-                          className="warning-item rounded-lg border border-red-200 bg-red-50 p-4 font-medium text-red-900"
+                          className="warning-item rounded-lg border border-red-200 bg-white p-4 font-bold leading-7 text-red-900"
                         >
                           {warning}
                         </li>
@@ -851,14 +1008,17 @@ ${
                   )}
                 </section>
 
-                <section className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+                <section className="rounded-lg border border-slate-200 bg-slate-50 p-5">
                   <div className="mb-3 flex items-center justify-between gap-4">
-                    <h3 className="text-xl font-semibold">
-                      📅 Follow-Up Tracker
-                    </h3>
+                    <div>
+                      <p className="text-sm font-bold uppercase text-slate-500">
+                        Schedule
+                      </p>
+                      <h3 className="text-2xl font-black">Follow-Ups</h3>
+                    </div>
 
                     {totalFollowUps > 0 && (
-                      <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-slate-700">
+                      <span className="rounded-lg bg-white px-3 py-2 text-sm font-black text-slate-700">
                         {completedFollowUpCount}/{totalFollowUps} done
                       </span>
                     )}
@@ -882,7 +1042,7 @@ ${
                                 type="checkbox"
                                 checked={isCompleted}
                                 onChange={() => toggleFollowUp(index, item)}
-                                className="mt-1 h-5 w-5 print:hidden"
+                                className="mt-1 h-6 w-6 print:hidden"
                               />
 
                               <span
@@ -905,9 +1065,12 @@ ${
                   )}
                 </section>
 
-                <section className="rounded-xl border border-purple-200 bg-purple-50 p-5">
-                  <h3 className="mb-3 text-xl font-semibold">
-                    🩺 Symptoms & Observations
+                <section className="rounded-lg border border-purple-200 bg-purple-50 p-5">
+                  <p className="mb-2 text-sm font-bold uppercase text-purple-800">
+                    Track changes
+                  </p>
+                  <h3 className="mb-3 text-2xl font-black">
+                    Symptoms & Observations
                   </h3>
 
                   <div className="grid gap-2 sm:grid-cols-2 print:hidden">
@@ -927,9 +1090,9 @@ ${
                             type="checkbox"
                             checked={isLogged}
                             onChange={() => toggleSymptom(symptom)}
-                            className="h-5 w-5"
+                            className="h-6 w-6"
                           />
-                          <span>{symptom}</span>
+                          <span className="font-bold">{symptom}</span>
                         </label>
                       );
                     })}
@@ -940,12 +1103,12 @@ ${
                       value={customSymptom}
                       onChange={(e) => setCustomSymptom(e.target.value)}
                       placeholder="Add custom symptom or observation"
-                      className="flex-1 rounded-xl border border-purple-200 bg-white p-3 text-slate-800 outline-none focus:border-purple-500"
+                      className="min-h-12 flex-1 rounded-lg border border-purple-200 bg-white p-3 text-slate-800 outline-none focus:border-purple-500"
                     />
 
                     <button
                       onClick={addCustomSymptom}
-                      className="rounded-xl bg-purple-700 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-800"
+                      className="min-h-12 rounded-lg bg-purple-700 px-4 py-2 text-sm font-black text-white hover:bg-purple-800"
                     >
                       Add Symptom
                     </button>
@@ -975,21 +1138,24 @@ ${
                   )}
                 </section>
 
-                <section className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-                  <h3 className="mb-3 text-xl font-semibold">
-                    📝 Caregiver Notes
+                <section className="rounded-lg border border-slate-200 bg-slate-50 p-5">
+                  <p className="mb-2 text-sm font-bold uppercase text-slate-500">
+                    Write it down
+                  </p>
+                  <h3 className="mb-3 text-2xl font-black">
+                    Caregiver Notes
                   </h3>
 
                   <textarea
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
                     placeholder="Example: Mom seemed more confused today or missed morning medication."
-                    className="min-h-28 w-full rounded-xl border border-slate-300 bg-white p-3 text-slate-800 outline-none focus:border-blue-500 print:hidden"
+                    className="min-h-32 w-full rounded-lg border border-slate-300 bg-white p-3 text-slate-800 outline-none focus:border-blue-500 print:hidden"
                   />
 
                   <button
                     onClick={addNote}
-                    className="mt-3 rounded-xl bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 print:hidden"
+                    className="mt-3 min-h-12 rounded-lg bg-slate-800 px-4 py-2 text-sm font-black text-white hover:bg-slate-900 print:hidden"
                   >
                     Add Note
                   </button>
@@ -1012,9 +1178,15 @@ ${
                   )}
                 </section>
 
-                <section className="family-summary-card rounded-xl border border-emerald-200 bg-emerald-50 p-5 print:hidden">
-                  <h3 className="mb-3 text-xl font-semibold">
-                    👨‍👩‍👧 Family Care Summary
+                <section
+                  id="share"
+                  className="family-summary-card rounded-lg border border-emerald-200 bg-emerald-50 p-5 print:hidden"
+                >
+                  <p className="mb-2 text-sm font-bold uppercase text-emerald-800">
+                    Share
+                  </p>
+                  <h3 className="mb-3 text-2xl font-black">
+                    Family Care Summary
                   </h3>
 
                   <p className="mb-4 leading-7 text-slate-700">
@@ -1024,9 +1196,9 @@ ${
 
                   <button
                     onClick={copyFamilySummary}
-                    className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+                    className="min-h-12 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-black text-white hover:bg-emerald-800"
                   >
-                    📋 Copy Summary
+                    Copy Summary
                   </button>
 
                   {copyMessage && (
@@ -1036,9 +1208,12 @@ ${
                   )}
                 </section>
 
-                <section className="rounded-xl border border-blue-200 bg-blue-50 p-5">
-                  <h3 className="mb-3 text-xl font-semibold">
-                    🕘 Care Timeline
+                <section className="rounded-lg border border-blue-200 bg-blue-50 p-5">
+                  <p className="mb-2 text-sm font-bold uppercase text-blue-800">
+                    History
+                  </p>
+                  <h3 className="mb-3 text-2xl font-black">
+                    Care Timeline
                   </h3>
 
                   {timeline.length > 0 ? (

@@ -5,7 +5,40 @@ from openai import OpenAI
 
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+DEFAULT_DISCLAIMER = (
+    "This tool does not provide medical advice. Contact a licensed healthcare "
+    "professional for medical concerns."
+)
+
+CARE_PLAN_DEFAULTS = {
+    "summary": "Not specified",
+    "daily_tasks": [],
+    "medications": [],
+    "warning_signs": [],
+    "follow_up": [],
+    "disclaimer": DEFAULT_DISCLAIMER,
+}
+
+
+def get_openai_client() -> OpenAI:
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY is not configured.")
+    return OpenAI(api_key=api_key)
+
+
+def normalize_care_plan(raw_plan: dict) -> dict:
+    if not isinstance(raw_plan, dict):
+        raw_plan = {}
+    plan = {**CARE_PLAN_DEFAULTS, **raw_plan}
+    for key in ["daily_tasks", "medications", "warning_signs", "follow_up"]:
+        if not isinstance(plan.get(key), list):
+            plan[key] = []
+    if not isinstance(plan.get("summary"), str):
+        plan["summary"] = "Not specified"
+    if not isinstance(plan.get("disclaimer"), str) or not plan["disclaimer"].strip():
+        plan["disclaimer"] = DEFAULT_DISCLAIMER
+    return plan
 
 
 def generate_care_plan(document_text: str):
@@ -49,8 +82,9 @@ Document:
 {document_text}
 """
 
-    response = client.chat.completions.create(
+    response = get_openai_client().chat.completions.create(
         model="gpt-4.1-mini",
+        response_format={"type": "json_object"},
         messages=[
             {
                 "role": "system",
@@ -66,7 +100,7 @@ Document:
     ai_output = response.choices[0].message.content
 
     try:
-        return json.loads(ai_output)
+        return normalize_care_plan(json.loads(ai_output))
     except Exception:
         return {
             "summary": ai_output,
@@ -74,5 +108,5 @@ Document:
             "medications": [],
             "warning_signs": [],
             "follow_up": [],
-            "disclaimer": "This tool does not provide medical advice. Contact a licensed healthcare professional for medical concerns.",
+            "disclaimer": DEFAULT_DISCLAIMER,
         }
